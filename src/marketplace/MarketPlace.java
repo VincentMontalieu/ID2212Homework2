@@ -24,5 +24,5 @@ public interface MarketPlace extends Remote {
 
 	public void placeWish(Wish wish) throws RemoteException, RejectedException;
 
-	public Trader getTrader(String name);
+	public Trader getTrader(String name) throws RemoteException;
 }

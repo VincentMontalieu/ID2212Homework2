@@ -12,5 +12,5 @@ public interface Trader extends Remote {
 
 	public void notifyWish(Wish wish, Item item) throws RemoteException;
 
-	public String getName();
+	public String getName() throws RemoteException;
 }

@@ -9,16 +9,16 @@ public class MarketPlaceServer {
 			+ "<market_rmi_url>";
 	private static final String MARKET = "Agora";
 
-	public MarketPlaceServer(String MarketName) {
+	public MarketPlaceServer(String marketName) {
 		try {
-			MarketPlace market = new MarketPlaceImpl(MarketName);
+			MarketPlace market = new MarketPlaceImpl(marketName);
 			// Register the newly created object at rmiregistry.
 			try {
 				LocateRegistry.getRegistry(1099).list();
 			} catch (RemoteException e) {
 				LocateRegistry.createRegistry(1099);
 			}
-			Naming.rebind(MarketName, market);
+			Naming.rebind(marketName, market);
 			System.out.println(market + " is ready.");
 		} catch (Exception e) {
 			e.printStackTrace();
