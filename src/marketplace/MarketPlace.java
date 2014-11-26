@@ -20,7 +20,9 @@ public interface MarketPlace extends Remote {
 	public void buyItem(Item item, Trader buyer) throws RemoteException,
 			RejectedException, bankrmi.RejectedException;
 
-	public List<Item> getItemsOnSale() throws RemoteException;
+	public String[] getItemsOnSale() throws RemoteException;
 
 	public void placeWish(Wish wish) throws RemoteException, RejectedException;
+
+	public Trader getTrader(String name);
 }

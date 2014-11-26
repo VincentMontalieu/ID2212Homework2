@@ -64,6 +64,11 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	}
 
 	@Override
+	public synchronized Trader getTrader(String name) {
+		return registeredTraders.get(registeredTraders.indexOf(name));
+	}
+
+	@Override
 	public synchronized void placeItemOnSale(Item item) throws RemoteException,
 			RejectedException {
 		if (this.itemsOnSale.contains(item))
@@ -95,8 +100,8 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	}
 
 	@Override
-	public synchronized List<Item> getItemsOnSale() throws RemoteException {
-		return this.itemsOnSale;
+	public synchronized String[] getItemsOnSale() throws RemoteException {
+		return this.itemsOnSale.toArray(new String[1]);
 	}
 
 	@Override

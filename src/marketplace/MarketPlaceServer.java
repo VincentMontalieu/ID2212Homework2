@@ -1,9 +1,8 @@
 package marketplace;
 
-import java.net.MalformedURLException;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 
 public class MarketPlaceServer {
 	private static final String USAGE = "java marketplace.MarketPlaceServer "
@@ -13,12 +12,16 @@ public class MarketPlaceServer {
 	public MarketPlaceServer(String MarketName) {
 		try {
 			MarketPlace market = new MarketPlaceImpl(MarketName);
-
-			/* Register the marketplace to the RMI naming service */
+			// Register the newly created object at rmiregistry.
+			try {
+				LocateRegistry.getRegistry(1099).list();
+			} catch (RemoteException e) {
+				LocateRegistry.createRegistry(1099);
+			}
 			Naming.rebind(MarketName, market);
 			System.out.println(market + " is ready.");
-		} catch (RemoteException | MalformedURLException | NotBoundException ex) {
-			ex.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 

@@ -3,29 +3,36 @@ package client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.StringTokenizer;
 
+import marketplace.ItemImpl;
+import marketplace.MarketPlace;
+import marketplace.WishImpl;
 import bankrmi.Account;
 import bankrmi.Bank;
 import bankrmi.RejectedException;
 
 public class SuperClient {
-	private static final String USAGE = "java bankrmi.Client <bank_url>";
 	private static final String DEFAULT_BANK_NAME = "Nordea";
+	private static final String DEFAULT_MARKET_NAME = "Agora";
 	Account account;
+	Trader trader;
 	Bank bankobj;
-	private String bankname;
-	String clientname;
+	MarketPlace marketobj;
+	private String bankname, marketname;
+	String clientname, itemname;
 
 	static enum CommandName {
-		newAccount, getAccount, deleteAccount, deposit, withdraw, balance, quit, help, list;
+		newAccount, getAccount, deleteAccount, deposit, withdraw, balance, quit, help, list, newTrader, getTrader, deleteTrader, buy, sell, displayItems, wish;
 	};
 
-	public SuperClient(String bankName) {
+	public SuperClient(String bankName, String marketName) {
 		this.bankname = bankName;
+		this.marketname = marketName;
 		try {
 			try {
 				LocateRegistry.getRegistry(1099).list();
@@ -33,15 +40,17 @@ public class SuperClient {
 				LocateRegistry.createRegistry(1099);
 			}
 			bankobj = (Bank) Naming.lookup(bankname);
+			marketobj = (MarketPlace) Naming.lookup(marketname);
 		} catch (Exception e) {
 			System.out.println("The runtime failed: " + e.getMessage());
 			System.exit(0);
 		}
 		System.out.println("Connected to bank: " + bankname);
+		System.out.println("Connected to market: " + marketname);
 	}
 
 	public SuperClient() {
-		this(DEFAULT_BANK_NAME);
+		this(DEFAULT_BANK_NAME, DEFAULT_MARKET_NAME);
 	}
 
 	public void run() {
@@ -49,7 +58,8 @@ public class SuperClient {
 				System.in));
 
 		while (true) {
-			System.out.print(clientname + "@" + bankname + ">");
+			System.out.print(clientname + "@" + bankname + "/" + marketname
+					+ ">");
 			try {
 				String userInput = consoleIn.readLine();
 				execute(parse(userInput));
@@ -73,6 +83,7 @@ public class SuperClient {
 
 		CommandName commandName = null;
 		String userName = null;
+		String sellerName = null;
 		float amount = 0;
 		int userInputTokenNo = 1;
 
@@ -99,15 +110,19 @@ public class SuperClient {
 					return null;
 				}
 				break;
+			case 4:
+				sellerName = tokenizer.nextToken();
+				break;
 			default:
 				System.out.println("Illegal command");
 				return null;
 			}
 			userInputTokenNo++;
 		}
-		return new Command(commandName, userName, amount);
+		return new Command(commandName, userName, amount, sellerName);
 	}
 
+	@SuppressWarnings("incomplete-switch")
 	void execute(Command command) throws RemoteException, RejectedException {
 		if (command == null) {
 			return;
@@ -124,6 +139,16 @@ public class SuperClient {
 				return;
 			}
 			return;
+		case displayItems:
+			try {
+				for (String item : marketobj.getItemsOnSale()) {
+					System.out.println(item);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
+			return;
 		case quit:
 			System.exit(0);
 		case help:
@@ -131,7 +156,6 @@ public class SuperClient {
 				System.out.println(commandName);
 			}
 			return;
-
 		}
 
 		// all further commands require a name to be specified
@@ -154,22 +178,50 @@ public class SuperClient {
 			clientname = userName;
 			bankobj.deleteAccount(userName);
 			return;
+		case newTrader:
+			clientname = userName;
+			try {
+				marketobj.registerClient(new TraderImpl(userName));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (marketplace.exception.RejectedException e) {
+				e.printStackTrace();
+			}
+			return;
+		case deleteTrader:
+			clientname = userName;
+			try {
+				marketobj.unRegisterClient(new TraderImpl(userName));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (marketplace.exception.RejectedException e) {
+				e.printStackTrace();
+			}
+			return;
 		}
 
 		// all further commands require a Account reference
 		Account acc = bankobj.getAccount(userName);
+		Trader trd = marketobj.getTrader(userName);
 		if (acc == null) {
 			System.out.println("No account for " + userName);
 			return;
+		}
+		if (trd == null) {
+			System.out.println("No trader for " + userName);
+			return;
 		} else {
 			account = acc;
-			clientname = userName;
+			trader = trd;
+			itemname = userName;
 		}
 
 		switch (command.getCommandName()) {
 		case getAccount:
 			System.out.println(account);
 			break;
+		case getTrader:
+			System.out.println(trader);
 		case deposit:
 			account.deposit(command.getAmount());
 			break;
@@ -179,18 +231,54 @@ public class SuperClient {
 		case balance:
 			System.out.println("balance: $" + account.getBalance());
 			break;
+		case buy:
+			try {
+				marketobj.buyItem(new ItemImpl(itemname, command.getAmount(),
+						new TraderImpl(command.getSellerName())),
+						new TraderImpl(userName));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (marketplace.exception.RejectedException e) {
+				e.printStackTrace();
+			}
+			break;
+		case sell:
+			try {
+				marketobj.placeItemOnSale(new ItemImpl(itemname, command
+						.getAmount(), new TraderImpl(userName)));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (marketplace.exception.RejectedException e) {
+				e.printStackTrace();
+			}
+			break;
+		case wish:
+			try {
+				marketobj.placeWish(new WishImpl(new ItemImpl(itemname, command
+						.getAmount(), new TraderImpl(command.getSellerName())),
+						new TraderImpl(userName)));
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (marketplace.exception.RejectedException e) {
+				e.printStackTrace();
+			}
+			break;
 		default:
 			System.out.println("Illegal command");
 		}
 	}
 
 	private class Command {
-		private String userName;
+		private String userOrItemName, sellerName;
 		private float amount;
 		private CommandName commandName;
 
 		private String getUserName() {
-			return userName;
+			return userOrItemName;
+		}
+
+		private String getSellerName() {
+			return sellerName;
 		}
 
 		private float getAmount() {
@@ -202,25 +290,15 @@ public class SuperClient {
 		}
 
 		private Command(SuperClient.CommandName commandName, String userName,
-				float amount) {
+				float amount, String sellerName) {
 			this.commandName = commandName;
-			this.userName = userName;
+			this.userOrItemName = userName;
 			this.amount = amount;
+			this.sellerName = sellerName;
 		}
 	}
 
 	public static void main(String[] args) {
-		if ((args.length > 1) || (args.length > 0 && args[0].equals("-h"))) {
-			System.out.println(USAGE);
-			System.exit(1);
-		}
-
-		String bankName;
-		if (args.length > 0) {
-			bankName = args[0];
-			new SuperClient(bankName).run();
-		} else {
-			new SuperClient().run();
-		}
+		new SuperClient().run();
 	}
 }
