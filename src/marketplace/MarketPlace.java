@@ -8,8 +8,8 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import client.Trader;
 import marketplace.exception.RejectedException;
+import client.Trader;
 
 /**
  *
@@ -26,7 +26,7 @@ public interface MarketPlace extends Remote {
 			RejectedException;
 
 	public void buyItem(Item item, Trader buyer) throws RemoteException,
-			RejectedException;
+			RejectedException, bankrmi.RejectedException;
 
 	public List<Item> getItemsOnSale() throws RemoteException;
 
