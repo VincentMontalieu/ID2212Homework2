@@ -8,8 +8,6 @@ public interface Wish extends Remote {
 
 	public Item getItem();
 
-	public Float getItemPrice();
-
 	public Trader getTrader();
 
 }

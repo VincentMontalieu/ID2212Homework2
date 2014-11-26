@@ -111,7 +111,7 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	private synchronized void inspectItemsForNotification(Wish wish) {
 		for (Item it : this.itemsOnSale) {
 			if (it.getName().equalsIgnoreCase(wish.getItem().getName())) {
-				if (it.getPrice().compareTo(wish.getItemPrice()) <= 0) {
+				if (it.getPrice().compareTo(wish.getItem().getPrice()) <= 0) {
 					try {
 						wish.getTrader().notifyWish(wish, it);
 					} catch (RemoteException ex) {
@@ -125,7 +125,7 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	private synchronized void inspectWishesForNotification(Item item) {
 		for (Wish w : this.wishes) {
 			if (w.getItem().getName().equalsIgnoreCase(item.getName())) {
-				if (w.getItemPrice().compareTo(item.getPrice()) >= 0) {
+				if (w.getItem().getPrice().compareTo(item.getPrice()) >= 0) {
 					try {
 						w.getTrader().notifyWish(w, item);
 					} catch (RemoteException ex) {

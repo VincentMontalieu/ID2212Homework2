@@ -12,7 +12,7 @@ import bankrmi.Account;
 import bankrmi.Bank;
 import bankrmi.RejectedException;
 
-public class Client {
+public class SuperClient {
 	private static final String USAGE = "java bankrmi.Client <bank_url>";
 	private static final String DEFAULT_BANK_NAME = "Nordea";
 	Account account;
@@ -24,7 +24,7 @@ public class Client {
 		newAccount, getAccount, deleteAccount, deposit, withdraw, balance, quit, help, list;
 	};
 
-	public Client(String bankName) {
+	public SuperClient(String bankName) {
 		this.bankname = bankName;
 		try {
 			try {
@@ -40,7 +40,7 @@ public class Client {
 		System.out.println("Connected to bank: " + bankname);
 	}
 
-	public Client() {
+	public SuperClient() {
 		this(DEFAULT_BANK_NAME);
 	}
 
@@ -201,7 +201,7 @@ public class Client {
 			return commandName;
 		}
 
-		private Command(Client.CommandName commandName, String userName,
+		private Command(SuperClient.CommandName commandName, String userName,
 				float amount) {
 			this.commandName = commandName;
 			this.userName = userName;
@@ -218,9 +218,9 @@ public class Client {
 		String bankName;
 		if (args.length > 0) {
 			bankName = args[0];
-			new Client(bankName).run();
+			new SuperClient(bankName).run();
 		} else {
-			new Client().run();
+			new SuperClient().run();
 		}
 	}
 }
