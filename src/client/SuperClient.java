@@ -20,7 +20,6 @@ public class SuperClient {
 	private static final String DEFAULT_BANK_NAME = "Nordea";
 	private static final String DEFAULT_MARKET_NAME = "Agora";
 	Account account;
-	Trader trader;
 	Bank bankobj;
 	MarketPlace marketobj;
 	private String bankname, marketname;
@@ -159,29 +158,29 @@ public class SuperClient {
 		}
 
 		// all further commands require a name to be specified
-		String userName = command.getUserName();
-		if (userName == null) {
-			userName = clientname;
+		String userOrItemName = command.getUserOrItemName();
+		if (userOrItemName == null) {
+			userOrItemName = clientname;
 		}
 
-		if (userName == null) {
+		if (userOrItemName == null) {
 			System.out.println("name is not specified");
 			return;
 		}
 
 		switch (command.getCommandName()) {
 		case newAccount:
-			clientname = userName;
-			bankobj.newAccount(userName);
+			clientname = userOrItemName;
+			bankobj.newAccount(userOrItemName);
 			return;
 		case deleteAccount:
-			clientname = userName;
-			bankobj.deleteAccount(userName);
+			clientname = userOrItemName;
+			bankobj.deleteAccount(userOrItemName);
 			return;
 		case newTrader:
-			clientname = userName;
+			clientname = userOrItemName;
 			try {
-				marketobj.registerClient(new TraderImpl(userName));
+				marketobj.registerClient(new TraderImpl(userOrItemName));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (marketplace.exception.RejectedException e) {
@@ -189,9 +188,9 @@ public class SuperClient {
 			}
 			return;
 		case deleteTrader:
-			clientname = userName;
+			clientname = userOrItemName;
 			try {
-				marketobj.unRegisterClient(new TraderImpl(userName));
+				marketobj.unRegisterClient(new TraderImpl(userOrItemName));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (marketplace.exception.RejectedException e) {
@@ -201,27 +200,22 @@ public class SuperClient {
 		}
 
 		// all further commands require a Account reference
-		Account acc = bankobj.getAccount(userName);
-		Trader trd = marketobj.getTrader(userName);
-		if (acc == null) {
-			System.out.println("No account for " + userName);
-			return;
-		}
-		if (trd == null) {
-			System.out.println("No trader for " + userName);
+		Account acc = bankobj.getAccount(userOrItemName);
+		if (acc == null
+				&& ((command.getCommandName().equals("buy"))
+						|| (command.getCommandName().equals("sell")) || (command
+							.getCommandName().equals("wish")))) {
+			System.out.println("No account for " + userOrItemName);
 			return;
 		} else {
 			account = acc;
-			trader = trd;
-			itemname = userName;
+			itemname = userOrItemName;
 		}
 
 		switch (command.getCommandName()) {
 		case getAccount:
 			System.out.println(account);
 			break;
-		case getTrader:
-			System.out.println(trader);
 		case deposit:
 			account.deposit(command.getAmount());
 			break;
@@ -235,7 +229,7 @@ public class SuperClient {
 			try {
 				marketobj.buyItem(new ItemImpl(itemname, command.getAmount(),
 						new TraderImpl(command.getSellerName())),
-						new TraderImpl(userName));
+						new TraderImpl(userOrItemName));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (marketplace.exception.RejectedException e) {
@@ -245,7 +239,7 @@ public class SuperClient {
 		case sell:
 			try {
 				marketobj.placeItemOnSale(new ItemImpl(itemname, command
-						.getAmount(), new TraderImpl(userName)));
+						.getAmount(), new TraderImpl(userOrItemName)));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (marketplace.exception.RejectedException e) {
@@ -256,7 +250,7 @@ public class SuperClient {
 			try {
 				marketobj.placeWish(new WishImpl(new ItemImpl(itemname, command
 						.getAmount(), new TraderImpl(command.getSellerName())),
-						new TraderImpl(userName)));
+						new TraderImpl(userOrItemName)));
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (marketplace.exception.RejectedException e) {
@@ -273,7 +267,7 @@ public class SuperClient {
 		private float amount;
 		private CommandName commandName;
 
-		private String getUserName() {
+		private String getUserOrItemName() {
 			return userOrItemName;
 		}
 
@@ -289,10 +283,10 @@ public class SuperClient {
 			return commandName;
 		}
 
-		private Command(SuperClient.CommandName commandName, String userName,
-				float amount, String sellerName) {
+		private Command(SuperClient.CommandName commandName,
+				String userOrItemName, float amount, String sellerName) {
 			this.commandName = commandName;
-			this.userOrItemName = userName;
+			this.userOrItemName = userOrItemName;
 			this.amount = amount;
 			this.sellerName = sellerName;
 		}

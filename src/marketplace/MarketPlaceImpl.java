@@ -17,6 +17,7 @@ import marketplace.exception.TraderNotExistsException;
 import marketplace.exception.WishExistsException;
 import bankrmi.Bank;
 import client.Trader;
+import client.TraderImpl;
 
 public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace {
 	private String name;
@@ -64,11 +65,6 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	}
 
 	@Override
-	public synchronized Trader getTrader(String name) {
-		return registeredTraders.get(registeredTraders.indexOf(name));
-	}
-
-	@Override
 	public synchronized void placeItemOnSale(Item item) throws RemoteException,
 			RejectedException {
 		if (this.itemsOnSale.contains(item))
@@ -113,7 +109,8 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 		this.inspectItemsForNotification(wish);
 	}
 
-	private synchronized void inspectItemsForNotification(Wish wish) throws RemoteException {
+	private synchronized void inspectItemsForNotification(Wish wish)
+			throws RemoteException {
 		for (Item it : this.itemsOnSale) {
 			if (it.getName().equalsIgnoreCase(wish.getItem().getName())) {
 				if (it.getPrice().compareTo(wish.getItem().getPrice()) <= 0) {
@@ -127,7 +124,8 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 		}
 	}
 
-	private synchronized void inspectWishesForNotification(Item item) throws RemoteException {
+	private synchronized void inspectWishesForNotification(Item item)
+			throws RemoteException {
 		for (Wish w : this.wishes) {
 			if (w.getItem().getName().equalsIgnoreCase(item.getName())) {
 				if (w.getItem().getPrice().compareTo(item.getPrice()) >= 0) {

@@ -1,8 +1,8 @@
 package marketplace;
 
+import java.net.MalformedURLException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.List;
 
 import marketplace.exception.RejectedException;
 import client.Trader;
@@ -23,6 +23,4 @@ public interface MarketPlace extends Remote {
 	public String[] getItemsOnSale() throws RemoteException;
 
 	public void placeWish(Wish wish) throws RemoteException, RejectedException;
-
-	public Trader getTrader(String name) throws RemoteException;
 }
