@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package marketplace;
 
 import java.net.MalformedURLException;
@@ -9,10 +5,6 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
-/**
- * 
- * @author Guillaume
- */
 public class MarketPlaceServer {
 	private static final String USAGE = "java marketplace.MarketPlaceServer "
 			+ "<market_rmi_url>";

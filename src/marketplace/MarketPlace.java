@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package marketplace;
 
 import java.rmi.Remote;
@@ -11,10 +7,6 @@ import java.util.List;
 import marketplace.exception.RejectedException;
 import client.Trader;
 
-/**
- *
- * @author Alex
- */
 public interface MarketPlace extends Remote {
 	public void registerClient(Trader trader) throws RemoteException,
 			RejectedException;

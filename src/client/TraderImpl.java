@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package client;
 
 import java.net.MalformedURLException;
@@ -12,10 +8,6 @@ import java.rmi.server.UnicastRemoteObject;
 import marketplace.Item;
 import marketplace.Wish;
 
-/**
- * 
- * @author Guillaume
- */
 public class TraderImpl extends UnicastRemoteObject implements Trader {
 	private String login;
 
