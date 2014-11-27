@@ -2,6 +2,7 @@ package marketplace.exception;
 
 import marketplace.Item;
 
+@SuppressWarnings("serial")
 public class ItemExistsException extends RejectedException {
 	protected Item item;
 
@@ -11,7 +12,7 @@ public class ItemExistsException extends RejectedException {
 
 	@Override
 	public String toString() {
-		return "To implement";
+		return "Sorry, the item [ " + item + " ] already exists.";
 	}
 
 }

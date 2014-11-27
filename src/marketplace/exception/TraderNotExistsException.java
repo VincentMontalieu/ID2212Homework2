@@ -1,7 +1,10 @@
 package marketplace.exception;
 
+import java.rmi.RemoteException;
+
 import client.Trader;
 
+@SuppressWarnings("serial")
 public class TraderNotExistsException extends RejectedException {
 	protected Trader trader;
 
@@ -11,7 +14,12 @@ public class TraderNotExistsException extends RejectedException {
 
 	@Override
 	public String toString() {
-		return "To implement";
+		try {
+			return "Trader: " + trader.getName() + " doesn't exists.";
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return "Error with traders data...";
+		}
 	}
 
 }

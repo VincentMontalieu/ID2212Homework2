@@ -1,8 +1,12 @@
 package marketplace;
 
+import java.io.Serializable;
+import java.rmi.RemoteException;
+
 import client.Trader;
 
-public class ItemImpl implements Item {
+@SuppressWarnings("serial")
+public class ItemImpl implements Item, Serializable {
 
 	private String name;
 	private Float price;
@@ -29,8 +33,12 @@ public class ItemImpl implements Item {
 		return owner;
 	}
 
-	@Override
-	public void setOwner(Trader buyer) {
-		this.owner = buyer;
+	public String toString() {
+		try {
+			return name + " $" + price + " " + owner.getName();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+			return "Error with items data...";
+		}
 	}
 }

@@ -2,6 +2,7 @@ package marketplace.exception;
 
 import marketplace.Item;
 
+@SuppressWarnings("serial")
 public class ItemTooExpensiveException extends RejectedException {
 	protected Item item;
 	protected Float currentBalance;
@@ -13,6 +14,8 @@ public class ItemTooExpensiveException extends RejectedException {
 
 	@Override
 	public String toString() {
-		return "To implement";
+		return "Sorry, the item [ " + item
+				+ " ] is too expensive for you...\nYou only have $"
+				+ currentBalance + ".";
 	}
 }

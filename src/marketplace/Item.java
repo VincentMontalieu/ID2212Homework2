@@ -12,7 +12,4 @@ public interface Item extends Remote {
 	public Float getPrice() throws RemoteException;
 
 	public Trader getOwner() throws RemoteException;
-
-	public void setOwner(Trader buyer) throws RemoteException;
-
-}
+	}

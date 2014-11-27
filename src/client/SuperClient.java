@@ -139,14 +139,7 @@ public class SuperClient {
 			}
 			return;
 		case displayItems:
-			try {
-				for (String item : marketobj.getItemsOnSale()) {
-					System.out.println(item);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				return;
-			}
+			System.out.println(marketobj.getItemsOnSale());
 			return;
 		case quit:
 			System.exit(0);

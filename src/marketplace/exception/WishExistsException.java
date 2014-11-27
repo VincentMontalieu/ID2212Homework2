@@ -2,6 +2,7 @@ package marketplace.exception;
 
 import marketplace.Wish;
 
+@SuppressWarnings("serial")
 public class WishExistsException extends RejectedException {
 	protected Wish wish;
 
@@ -11,6 +12,6 @@ public class WishExistsException extends RejectedException {
 
 	@Override
 	public String toString() {
-		return super.toString();
+		return "Sorry, the wish [ " + wish + " ] already exists.";
 	}
 }

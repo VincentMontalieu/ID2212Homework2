@@ -17,10 +17,9 @@ import marketplace.exception.TraderNotExistsException;
 import marketplace.exception.WishExistsException;
 import bankrmi.Bank;
 import client.Trader;
-import client.TraderImpl;
 
+@SuppressWarnings("serial")
 public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace {
-	private String name;
 	private List<Trader> registeredTraders;
 	private List<Item> itemsOnSale;
 	private List<Wish> wishes;
@@ -28,7 +27,6 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 
 	public MarketPlaceImpl(String name) throws RemoteException,
 			MalformedURLException, NotBoundException {
-		this.name = name;
 		this.registeredTraders = new ArrayList<>();
 		this.itemsOnSale = new ArrayList<>();
 		this.wishes = new ArrayList<>();
@@ -96,8 +94,8 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	}
 
 	@Override
-	public synchronized String[] getItemsOnSale() throws RemoteException {
-		return this.itemsOnSale.toArray(new String[1]);
+	public synchronized List<Item> getItemsOnSale() throws RemoteException {
+		return this.itemsOnSale;
 	}
 
 	@Override

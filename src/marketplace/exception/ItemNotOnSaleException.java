@@ -2,6 +2,7 @@ package marketplace.exception;
 
 import marketplace.Item;
 
+@SuppressWarnings("serial")
 public class ItemNotOnSaleException extends RejectedException {
 	protected Item item;
 
@@ -11,6 +12,6 @@ public class ItemNotOnSaleException extends RejectedException {
 
 	@Override
 	public String toString() {
-		return "To implement";
+		return "Sorry, the item [ " + item + " ] isn't available for sale.";
 	}
 }

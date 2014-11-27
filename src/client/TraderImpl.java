@@ -8,6 +8,7 @@ import java.rmi.server.UnicastRemoteObject;
 import marketplace.Item;
 import marketplace.Wish;
 
+@SuppressWarnings("serial")
 public class TraderImpl extends UnicastRemoteObject implements Trader {
 	private String login;
 
