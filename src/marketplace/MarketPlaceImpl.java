@@ -75,22 +75,53 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 	public synchronized void buyItem(Item item, Trader buyer)
 			throws RemoteException, RejectedException,
 			bankrmi.RejectedException {
-		if (!this.itemsOnSale.contains(item))
+		if (contains(item)) {
 			throw new ItemNotOnSaleException(item);
-
-		Float balance = this.bank.getAccount(item.getOwner().getName())
-				.getBalance();
-		if (balance.compareTo(item.getPrice()) <= 0) {
-			throw new ItemTooExpensiveException(item, balance);
 		}
 
-		Trader seller = item.getOwner();
+		Item actualItem = getItem(item);
 
-		this.bank.getAccount(seller.getName()).deposit(item.getPrice());
-		this.bank.getAccount(buyer.getName()).withdraw(item.getPrice());
+		if (actualItem == null) {
+			System.err.println("Purchase is not possible... System error.");
+			return;
+		}
 
-		this.itemsOnSale.remove(item);
-		seller.notifySale(item);
+		Float balance = this.bank.getAccount(buyer.getName()).getBalance();
+		if (balance.compareTo(actualItem.getPrice()) <= 0) {
+			throw new ItemTooExpensiveException(actualItem, balance);
+		}
+
+		Trader seller = actualItem.getOwner();
+
+		this.bank.getAccount(seller.getName()).deposit(actualItem.getPrice());
+		this.bank.getAccount(buyer.getName()).withdraw(actualItem.getPrice());
+
+		this.itemsOnSale.remove(actualItem);
+		seller.notifySale(actualItem);
+	}
+
+	private Item getItem(Item lookup) throws RemoteException {
+		for (Item item : itemsOnSale) {
+			if (item.getName().equalsIgnoreCase(lookup.getName())
+					&& item.getPrice().equals(lookup.getPrice())
+					&& item.getOwner().getName()
+							.equalsIgnoreCase(lookup.getOwner().getName())) {
+				return item;
+			}
+		}
+		return null;
+	}
+
+	private boolean contains(Item lookup) throws RemoteException {
+		for (Item item : itemsOnSale) {
+			if (item.getName().equalsIgnoreCase(lookup.getName())
+					&& item.getPrice() == lookup.getPrice()
+					&& item.getOwner().getName()
+							.equalsIgnoreCase(lookup.getOwner().getName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -113,7 +144,7 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 			if (it.getName().equalsIgnoreCase(wish.getItem().getName())) {
 				if (it.getPrice().compareTo(wish.getItem().getPrice()) <= 0) {
 					try {
-						wish.getTrader().notifyWish(wish, it);
+						wish.getTrader().notifyWish(wish);
 					} catch (RemoteException ex) {
 						ex.printStackTrace();
 					}
@@ -128,7 +159,7 @@ public class MarketPlaceImpl extends UnicastRemoteObject implements MarketPlace 
 			if (w.getItem().getName().equalsIgnoreCase(item.getName())) {
 				if (w.getItem().getPrice().compareTo(item.getPrice()) >= 0) {
 					try {
-						w.getTrader().notifyWish(w, item);
+						w.getTrader().notifyWish(w);
 					} catch (RemoteException ex) {
 						ex.printStackTrace();
 					}

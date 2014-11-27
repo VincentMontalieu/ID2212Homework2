@@ -41,4 +41,40 @@ public class ItemImpl implements Item, Serializable {
 			return "Error with items data...";
 		}
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof ItemImpl)) {
+			return false;
+		}
+		ItemImpl other = (ItemImpl) obj;
+		if (name == null) {
+			if (other.name != null) {
+				return false;
+			}
+		} else if (!name.equals(other.name)) {
+			return false;
+		}
+		if (owner == null) {
+			if (other.owner != null) {
+				return false;
+			}
+		} else if (!owner.equals(other.owner)) {
+			return false;
+		}
+		if (price == null) {
+			if (other.price != null) {
+				return false;
+			}
+		} else if (!price.equals(other.price)) {
+			return false;
+		}
+		return true;
+	}
 }

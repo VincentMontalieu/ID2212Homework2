@@ -9,8 +9,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.StringTokenizer;
 
+import marketplace.Item;
 import marketplace.ItemImpl;
 import marketplace.MarketPlace;
+import marketplace.Wish;
 import marketplace.WishImpl;
 import bankrmi.Account;
 import bankrmi.Bank;
@@ -23,15 +25,16 @@ public class SuperClient {
 	Bank bankobj;
 	MarketPlace marketobj;
 	private String bankname, marketname;
-	String clientname, itemname;
+	String clientname, displayedHostName;
 
 	static enum CommandName {
-		newAccount, getAccount, deleteAccount, deposit, withdraw, balance, quit, help, list, newTrader, getTrader, deleteTrader, buy, sell, displayItems, wish;
+		newAccount, getAccount, deleteAccount, deposit, withdraw, balance, quit, help, list, newTrader, deleteTrader, buy, sell, displayItems, wish;
 	};
 
 	public SuperClient(String bankName, String marketName) {
 		this.bankname = bankName;
 		this.marketname = marketName;
+		this.displayedHostName = bankname;
 		try {
 			try {
 				LocateRegistry.getRegistry(1099).list();
@@ -55,19 +58,31 @@ public class SuperClient {
 	public void run() {
 		BufferedReader consoleIn = new BufferedReader(new InputStreamReader(
 				System.in));
-
+		
+		System.out.println();
+		
 		while (true) {
-			System.out.print(clientname + "@" + bankname + "/" + marketname
-					+ ">");
+			System.out.print(clientname + "@" + displayedHostName + ">");
 			try {
 				String userInput = consoleIn.readLine();
 				execute(parse(userInput));
 			} catch (RejectedException re) {
-				System.out.println(re);
+				System.out.println(re.toString());
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.out.println(e.toString());
+			} catch (marketplace.exception.RejectedException e) {
+				System.out.println(e.toString());
 			}
 		}
+	}
+
+	public void notifySale(Item item) {
+		System.out.println("\n\nYour item: [ " + item + " ] was purchased!\n");
+	}
+
+	public void notifyWish(Wish wish) throws RemoteException {
+		System.out.println("\n\nThe item: [ " + wish.getItem()
+				+ " ] is now available!\n");
 	}
 
 	private Command parse(String userInput) {
@@ -121,137 +136,161 @@ public class SuperClient {
 		return new Command(commandName, userName, amount, sellerName);
 	}
 
-	@SuppressWarnings("incomplete-switch")
-	void execute(Command command) throws RemoteException, RejectedException {
+	private boolean isBankCommand(CommandName input) {
+		return input == CommandName.newAccount
+				|| input == CommandName.getAccount
+				|| input == CommandName.deleteAccount
+				|| input == CommandName.deposit
+				|| input == CommandName.withdraw
+				|| input == CommandName.balance || input == CommandName.list;
+	}
+
+	private boolean isMarketCommand(CommandName input) {
+		return input == CommandName.newTrader
+				|| input == CommandName.deleteTrader
+				|| input == CommandName.buy || input == CommandName.sell
+				|| input == CommandName.displayItems
+				|| input == CommandName.wish;
+	}
+
+	void execute(Command command) throws RemoteException, RejectedException,
+			MalformedURLException, marketplace.exception.RejectedException {
+
 		if (command == null) {
 			return;
 		}
 
-		switch (command.getCommandName()) {
-		case list:
-			try {
-				for (String accountHolder : bankobj.listAccounts()) {
-					System.out.println(accountHolder);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				return;
-			}
-			return;
-		case displayItems:
-			System.out.println(marketobj.getItemsOnSale());
-			return;
-		case quit:
-			System.exit(0);
-		case help:
+		CommandName inputCommand = command.getCommandName();
+		String userOrItemName = command.getUserOrItemName();
+
+		// When trying to call a Market command from the bank account
+		if (isMarketCommand(inputCommand) && displayedHostName.equals(bankname)
+				&& inputCommand != CommandName.newTrader) {
+			System.out.println("Please switch to your trading account.");
+		}
+
+		// When trying to call a Bank command from the market account
+		else if (isBankCommand(inputCommand)
+				&& displayedHostName.equals(marketname)
+				&& inputCommand != CommandName.newAccount) {
+			System.out.println("Please switch to your bank account.");
+		}
+
+		// Account creation
+		else if (inputCommand == CommandName.newAccount) {
+			clientname = userOrItemName;
+			displayedHostName = bankname;
+			bankobj.newAccount(userOrItemName);
+		}
+
+		// Trader creation
+		else if (inputCommand == CommandName.newTrader
+				&& bankobj.getAccount(userOrItemName) == null) {
+			System.out.println("Please create a bank account first.");
+		}
+
+		// Trader creation
+		else if (inputCommand == CommandName.newTrader) {
+			clientname = userOrItemName;
+			displayedHostName = marketname;
+			marketobj.registerClient(new TraderImpl(userOrItemName, this));
+		}
+
+		// General commands
+		else if (inputCommand == CommandName.help) {
 			for (CommandName commandName : CommandName.values()) {
 				System.out.println(commandName);
 			}
-			return;
 		}
 
-		// all further commands require a name to be specified
+		else if (inputCommand == CommandName.quit) {
+			System.exit(0);
+		}
+
+		// The command is a bank command and we have already created an account
+		else if (isBankCommand(inputCommand)
+				&& displayedHostName.equals(bankname)) {
+			doBankCommand(command);
+		}
+
+		// The command is a market command and we have already created an trader
+		else if (isMarketCommand(inputCommand)
+				&& displayedHostName.equals(marketname)) {
+			doMarketCommand(command);
+		}
+
+		else {
+			System.out.println("Illegal command.");
+		}
+	}
+
+	private void doMarketCommand(Command command) throws RemoteException,
+			MalformedURLException, marketplace.exception.RejectedException,
+			RejectedException {
+		CommandName inputCommand = command.getCommandName();
 		String userOrItemName = command.getUserOrItemName();
-		if (userOrItemName == null) {
-			userOrItemName = clientname;
-		}
+		Float amount = command.getAmount();
+		String sellerName = command.getSellerName();
 
-		if (userOrItemName == null) {
-			System.out.println("name is not specified");
-			return;
-		}
-
-		switch (command.getCommandName()) {
-		case newAccount:
-			clientname = userOrItemName;
-			bankobj.newAccount(userOrItemName);
-			return;
-		case deleteAccount:
-			clientname = userOrItemName;
-			bankobj.deleteAccount(userOrItemName);
-			return;
-		case newTrader:
-			clientname = userOrItemName;
-			try {
-				marketobj.registerClient(new TraderImpl(userOrItemName));
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (marketplace.exception.RejectedException e) {
-				e.printStackTrace();
-			}
-			return;
+		switch (inputCommand) {
+		case buy:
+			marketobj.buyItem(new ItemImpl(userOrItemName, amount,
+					new TraderImpl(sellerName, this)), new TraderImpl(
+					clientname, this));
+			break;
 		case deleteTrader:
-			clientname = userOrItemName;
-			try {
-				marketobj.unRegisterClient(new TraderImpl(userOrItemName));
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (marketplace.exception.RejectedException e) {
-				e.printStackTrace();
+			marketobj.unRegisterClient(new TraderImpl(userOrItemName, this));
+			clientname = null;
+			break;
+		case displayItems:
+			System.out.println();
+			for (Item item : marketobj.getItemsOnSale()) {
+				System.out.println(item);
 			}
-			return;
+			System.out.println();
+			break;
+		case sell:
+			marketobj.placeItemOnSale(new ItemImpl(userOrItemName, amount,
+					new TraderImpl(clientname, this)));
+			break;
+		case wish:
+			marketobj.placeWish(new WishImpl(new ItemImpl(userOrItemName,
+					amount, new TraderImpl("*WISH*", this)), new TraderImpl(
+					clientname, this)));
+			break;
+		default:
+			System.out.println("Illegal command.");
+			break;
 		}
+	}
 
-		// all further commands require a Account reference
-		Account acc = bankobj.getAccount(userOrItemName);
-		if (acc == null
-				&& ((command.getCommandName().equals("buy"))
-						|| (command.getCommandName().equals("sell")) || (command
-							.getCommandName().equals("wish")))) {
-			System.out.println("No account for " + userOrItemName);
-			return;
-		} else {
-			account = acc;
-			itemname = userOrItemName;
-		}
+	private void doBankCommand(Command command) throws RemoteException,
+			RejectedException {
+		CommandName inputCommand = command.getCommandName();
+		String userOrItemName = command.getUserOrItemName();
+		Float amount = command.getAmount();
+		account = bankobj.getAccount(clientname);
 
-		switch (command.getCommandName()) {
-		case getAccount:
-			System.out.println(account);
-			break;
-		case deposit:
-			account.deposit(command.getAmount());
-			break;
-		case withdraw:
-			account.withdraw(command.getAmount());
-			break;
+		switch (inputCommand) {
 		case balance:
 			System.out.println("balance: $" + account.getBalance());
 			break;
-		case buy:
-			try {
-				marketobj.buyItem(new ItemImpl(itemname, command.getAmount(),
-						new TraderImpl(command.getSellerName())),
-						new TraderImpl(userOrItemName));
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (marketplace.exception.RejectedException e) {
-				e.printStackTrace();
-			}
+		case deleteAccount:
+			clientname = null;
+			bankobj.deleteAccount(userOrItemName);
 			break;
-		case sell:
-			try {
-				marketobj.placeItemOnSale(new ItemImpl(itemname, command
-						.getAmount(), new TraderImpl(userOrItemName)));
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (marketplace.exception.RejectedException e) {
-				e.printStackTrace();
-			}
+		case deposit:
+			account.deposit(amount);
 			break;
-		case wish:
-			try {
-				marketobj.placeWish(new WishImpl(new ItemImpl(itemname, command
-						.getAmount(), new TraderImpl(command.getSellerName())),
-						new TraderImpl(userOrItemName)));
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
-			} catch (marketplace.exception.RejectedException e) {
-				e.printStackTrace();
-			}
+		case getAccount:
+			System.out.println(account);
+			break;
+		case withdraw:
+			account.withdraw(amount);
 			break;
 		default:
-			System.out.println("Illegal command");
+			System.out.println("Illegal command.");
+			break;
 		}
 	}
 

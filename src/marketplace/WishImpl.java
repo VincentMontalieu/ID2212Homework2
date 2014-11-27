@@ -1,8 +1,10 @@
 package marketplace;
 
+import java.io.Serializable;
+
 import client.Trader;
 
-public class WishImpl implements Wish {
+public class WishImpl implements Wish, Serializable {
 
 	private Item item;
 	private Trader trader;

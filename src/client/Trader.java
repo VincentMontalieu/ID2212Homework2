@@ -10,7 +10,7 @@ public interface Trader extends Remote {
 
 	public void notifySale(Item item) throws RemoteException;
 
-	public void notifyWish(Wish wish, Item item) throws RemoteException;
+	public void notifyWish(Wish wish) throws RemoteException;
 
 	public String getName() throws RemoteException;
 }
